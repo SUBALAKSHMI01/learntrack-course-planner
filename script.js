@@ -2,6 +2,64 @@ let course = null;
 let totalCourseHours = 0;
 let completedHours = 0;
 
+/* ---------- Local Storage ---------- */
+function saveState() {
+    const state = {
+        course,
+        totalCourseHours,
+        completedHours
+    };
+    localStorage.setItem("learnTrackState", JSON.stringify(state));
+}
+
+function loadState() {
+    const savedState = localStorage.getItem("learnTrackState");
+    if (!savedState) return;
+
+    const state = JSON.parse(savedState);
+    course = state.course;
+    totalCourseHours = state.totalCourseHours;
+    completedHours = state.completedHours;
+
+    updateUIAfterLoad();
+}
+
+/* ---------- UI Restore ---------- */
+function updateUIAfterLoad() {
+    if (!course) return;
+
+    const remaining = totalCourseHours - completedHours;
+    const progressPercent = (completedHours / totalCourseHours) * 100;
+
+    document.getElementById("result").innerText =
+        `Resumed course "${course}"`;
+
+    document.getElementById("progressBar").style.width =
+        progressPercent + "%";
+
+    document.getElementById("progressStatus").innerText =
+        `Completed: ${completedHours.toFixed(1)} hrs | Remaining: ${remaining.toFixed(1)} hrs`;
+
+    document.getElementById("progressMessage").innerText =
+        getMotivationMessage(progressPercent);
+}
+
+/* ---------- Motivation ---------- */
+function getMotivationMessage(progressPercent) {
+    if (progressPercent >= 100) {
+        return "🎉 Course completed! Amazing discipline!";
+    } else if (progressPercent >= 75) {
+        return "🔥 Almost there! Finish strong!";
+    } else if (progressPercent >= 50) {
+        return "💪 Halfway done! Keep going!";
+    } else if (progressPercent >= 25) {
+        return "🚀 Great start! Consistency matters!";
+    } else {
+        return "🌱 Every hour counts. Stay consistent!";
+    }
+}
+
+/* ---------- Create Plan ---------- */
 function createPlan() {
     course = document.getElementById("courseName").value.trim();
     totalCourseHours = Number(document.getElementById("totalHours").value);
@@ -13,13 +71,12 @@ function createPlan() {
         return;
     }
 
-    completedHours = 0; // reset progress
+    completedHours = 0;
 
     const fullDays = Math.floor(totalCourseHours / dailyHours);
     const remainingHours = totalCourseHours % dailyHours;
 
-    let message = "";
-
+    let message;
     if (remainingHours === 0) {
         message = `Plan created! You need ${fullDays} full day(s) to complete "${course}".`;
     } else {
@@ -28,18 +85,29 @@ function createPlan() {
 
     document.getElementById("result").innerText = message;
     document.getElementById("progressBar").style.width = "0%";
-document.getElementById("progressMessage").innerText = "";
-document.getElementById("progressStatus").innerText = "";
+    document.getElementById("progressStatus").innerText = "";
+    document.getElementById("progressMessage").innerText = "";
 
+    saveState();
 }
-function logProgress() {
-    const hoursStudied = Number(document.getElementById("dailyProgress").value);
 
+/* ---------- Log Progress ---------- */
+function logProgress() {
     if (!course) {
         document.getElementById("progressStatus").innerText =
             "Please create a course plan first.";
         return;
     }
+
+    if (completedHours >= totalCourseHours) {
+        document.getElementById("progressStatus").innerText =
+            "Course already completed. Great job! 🎉";
+        return;
+    }
+
+    const input = document.getElementById("dailyProgress");
+    const hoursStudied = Number(input.value);
+    input.value = "";
 
     if (hoursStudied <= 0) {
         document.getElementById("progressStatus").innerText =
@@ -48,36 +116,26 @@ function logProgress() {
     }
 
     completedHours += hoursStudied;
-
     if (completedHours > totalCourseHours) {
         completedHours = totalCourseHours;
     }
 
     const remaining = totalCourseHours - completedHours;
+    const progressPercent = (completedHours / totalCourseHours) * 100;
 
-   const progressPercent = (completedHours / totalCourseHours) * 100;
+    document.getElementById("progressBar").style.width =
+        progressPercent + "%";
 
-document.getElementById("progressBar").style.width =
-    progressPercent + "%";
+    document.getElementById("progressBar").style.backgroundColor = "#2ecc71";
 
-document.getElementById("progressStatus").innerText =
-    `Completed: ${completedHours.toFixed(1)} hrs | Remaining: ${remaining.toFixed(1)} hrs`;
+    document.getElementById("progressStatus").innerText =
+        `Completed: ${completedHours.toFixed(1)} hrs | Remaining: ${remaining.toFixed(1)} hrs`;
 
-let motivation = "";
+    document.getElementById("progressMessage").innerText =
+        getMotivationMessage(progressPercent);
 
-if (progressPercent >= 100) {
-    motivation = "🎉 Course completed! Amazing discipline!";
-} else if (progressPercent >= 75) {
-    motivation = "🔥 Almost there! Finish strong!";
-} else if (progressPercent >= 50) {
-    motivation = "💪 Halfway done! Keep going!";
-} else if (progressPercent >= 25) {
-    motivation = "🚀 Great start! Consistency matters!";
-} else {
-    motivation = "🌱 Every hour counts. Stay consistent!";
+    saveState();
 }
 
-document.getElementById("progressMessage").innerText = motivation;
-
-}
-
+/* ---------- On Load ---------- */
+window.onload = loadState;
