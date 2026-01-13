@@ -27,6 +27,10 @@ function createPlan() {
     }
 
     document.getElementById("result").innerText = message;
+    document.getElementById("progressBar").style.width = "0%";
+document.getElementById("progressMessage").innerText = "";
+document.getElementById("progressStatus").innerText = "";
+
 }
 function logProgress() {
     const hoursStudied = Number(document.getElementById("dailyProgress").value);
@@ -51,7 +55,29 @@ function logProgress() {
 
     const remaining = totalCourseHours - completedHours;
 
-    document.getElementById("progressStatus").innerText =
-        `Progress updated! Completed: ${completedHours.toFixed(1)} hrs | Remaining: ${remaining.toFixed(1)} hrs`;
+   const progressPercent = (completedHours / totalCourseHours) * 100;
+
+document.getElementById("progressBar").style.width =
+    progressPercent + "%";
+
+document.getElementById("progressStatus").innerText =
+    `Completed: ${completedHours.toFixed(1)} hrs | Remaining: ${remaining.toFixed(1)} hrs`;
+
+let motivation = "";
+
+if (progressPercent >= 100) {
+    motivation = "🎉 Course completed! Amazing discipline!";
+} else if (progressPercent >= 75) {
+    motivation = "🔥 Almost there! Finish strong!";
+} else if (progressPercent >= 50) {
+    motivation = "💪 Halfway done! Keep going!";
+} else if (progressPercent >= 25) {
+    motivation = "🚀 Great start! Consistency matters!";
+} else {
+    motivation = "🌱 Every hour counts. Stay consistent!";
+}
+
+document.getElementById("progressMessage").innerText = motivation;
+
 }
 
